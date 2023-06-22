@@ -1,10 +1,12 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from models.utils import clones
 
 """this file is the implementation of transformer, 
 the implementation of phi in section 4.2; 
 """
+
 def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
               mask=None, dropout=None) -> torch.Tensor:
     
@@ -41,11 +43,25 @@ class LayerNorm(nn.Module):
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
 class AddLayerNorm(nn.Module):
+    """equivalent to SubLayerConnect which shift x via
+    attn map or other nn modules
+    """
     def __init__(self, size:int, dropout=None) -> None:
         super().__init__()
         self.norm = LayerNorm(size)
     def forward(self, x:torch.Tensor, sublayer:nn.Module) -> torch.Tensor:
         return x + sublayer(self.norm(x))
+
+class EncoderLayer(nn.Module):
+    def __init__(self, size:int, attn:nn.Module, feed_forward:nn.Module, dropout=None) -> None:
+        super().__init__()
+        self.attn = attn
+        self.ff = feed_forward
+        self.sublayer = clones(AddLayerNorm(size, dropout),2)
+
+    def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
+        x = self.sublayer[0](x, lambda x: self.attn(x, x, x, mask))
+        return self.sublayer[1](x. self.ff)
 
 
 class EncoderDecoder(nn.Module):
