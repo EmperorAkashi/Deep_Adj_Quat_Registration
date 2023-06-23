@@ -12,6 +12,8 @@ def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
     
     """
     return: normalized score map, softmax(q*k) and attention map
+    mask is the map of the opposite sequence (i.e. x v.s. y), to
+    mask the attention weights conditional on y or x
     """
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2,-1).contiguous())/torch.sqrt(d_k)
@@ -53,6 +55,12 @@ class AddLayerNorm(nn.Module):
         return x + sublayer(self.norm(x))
 
 class EncoderLayer(nn.Module):
+    """regular encoder layer with first apply self-attention,
+    then apply feed forward layer; each have separate add norm layer 
+    to shift the resulted tensor as a normalized one.
+    Separate instances of layer norms are used due to all instances 
+    have separate learnable parameters
+    """
     def __init__(self, size:int, attn:nn.Module, feed_forward:nn.Module, dropout=None) -> None:
         super().__init__()
         self.attn = attn
@@ -62,6 +70,20 @@ class EncoderLayer(nn.Module):
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, mask))
         return self.sublayer[1](x. self.ff)
+
+class DecoderLayer(nn.Module):
+    def __init__(self, size:int, attn:nn.Module, src_attn:nn.Module, feed_forward:nn.Module, dropout) -> None:
+        super().__init__()
+        self.attn = attn
+        self.src_attn = src_attn
+        self.ff = feed_forward
+        self.sublayer = clones(AddLayerNorm(size, dropout), 3)
+
+    def forward(self, x:torch.Tensor, memory:torch.Tensor, src_mask:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
+        m = memory
+        x = self.sublayer[0](x, lambda x: self.attn(x, x, x, tgt_mask))
+        x = self.sublayer[1](x, lambda x: self.src_attn(x, x, x, tgt_mask))
+        return self.sublayer[2](x, self.ff)
 
 
 class EncoderDecoder(nn.Module):
