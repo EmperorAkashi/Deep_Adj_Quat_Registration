@@ -66,24 +66,55 @@ class EncoderLayer(nn.Module):
         self.attn = attn
         self.ff = feed_forward
         self.sublayer = clones(AddLayerNorm(size, dropout),2)
+        self.size = size #will be called by the interface
 
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, mask))
         return self.sublayer[1](x. self.ff)
 
 class DecoderLayer(nn.Module):
+    """second decode layer uses opposite map as key 
+    in the attention module, i.e. x to y and vice versa
+    """
     def __init__(self, size:int, attn:nn.Module, src_attn:nn.Module, feed_forward:nn.Module, dropout) -> None:
         super().__init__()
         self.attn = attn
         self.src_attn = src_attn
         self.ff = feed_forward
         self.sublayer = clones(AddLayerNorm(size, dropout), 3)
+        self.size = size
 
     def forward(self, x:torch.Tensor, memory:torch.Tensor, src_mask:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
         m = memory
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, tgt_mask))
-        x = self.sublayer[1](x, lambda x: self.src_attn(x, x, x, tgt_mask))
+        x = self.sublayer[1](x, lambda x: self.src_attn(x, m, m, tgt_mask))
         return self.sublayer[2](x, self.ff)
+
+class Encoder(nn.Module):
+    """class interface to implement multi-layer encoder
+    """
+    def __init__(self, layer:nn.Module, N:int) -> None:
+        super().__init__()
+        self.layers = clones(layer, N)
+        self.norm = LayerNorm(layer.size)
+    def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
+        for layer in self.layers:
+            x = layer(x,mask)
+        return self.norm(x)
+
+class Decoder(nn.Module):
+    """class interface to implement multi-layer decoder
+    """
+    def __init__(self, layer:nn.Module, N:int) -> None:
+        super().__init__()
+        self.layers = clones(layer, N)
+        self.norm = LayerNorm(layer.size)
+
+    def forward(self, x:torch.Tensor, memory:torch.Tensor, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
+        "we do not have mask in the real implementation"
+        for layer in self.layers:
+            x = layer(x, memory, src, tgt)
+        return self.norm(x)
 
 
 class EncoderDecoder(nn.Module):
