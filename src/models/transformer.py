@@ -116,6 +116,30 @@ class Decoder(nn.Module):
             x = layer(x, memory, src, tgt)
         return self.norm(x)
 
+class Generator(nn.Module):
+    """final MLP layer after decoder; translation and rotation
+    are generated separately 
+    """
+    def __init__(self, emb_dims:int):
+        super().__init__()
+        self.nn = nn.Sequential(nn.Linear(emb_dims, emb_dims // 2),
+                                nn.BatchNorm1d(emb_dims // 2),
+                                nn.ReLU(),
+                                nn.Linear(emb_dims // 2, emb_dims // 4),
+                                nn.BatchNorm1d(emb_dims // 4),
+                                nn.ReLU(),
+                                nn.Linear(emb_dims // 4, emb_dims // 8),
+                                nn.BatchNorm1d(emb_dims // 8),
+                                nn.ReLU())
+        self.proj_rot = nn.Linear(emb_dims // 8, 4)
+        self.proj_trans = nn.Linear(emb_dims // 8, 3)
+
+    def forward(self, x:torch.Tensor) -> torch.Tensor:
+        x = self.nn(x.max(dim=1)[0])
+        rotation = self.proj_rot(x)
+        translation = self.proj_trans(x)
+        rotation = rotation / torch.norm(rotation, p=2, dim=1, keepdim=True)
+        return rotation, translation
 
 class EncoderDecoder(nn.Module):
     """the core class to wrap up encode-decode architecture
