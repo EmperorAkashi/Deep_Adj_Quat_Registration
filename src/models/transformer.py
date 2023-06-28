@@ -84,7 +84,13 @@ class DecoderLayer(nn.Module):
         self.sublayer = clones(AddLayerNorm(size, dropout), 3)
         self.size = size
 
-    def forward(self, x:torch.Tensor, memory:torch.Tensor, src_mask:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
+    def forward(self, x:torch.Tensor, memory:torch.Tensor, src_mask:torch.Tensor, 
+                tgt_mask:torch.Tensor) -> torch.Tensor:
+        """memory is equivalent to the target feature map;
+        in the case of src attention, the key and value are different
+        from the source map, which can be regarded as a cross-correlation
+        or conditional attention
+        """
         m = memory
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, tgt_mask))
         x = self.sublayer[1](x, lambda x: self.src_attn(x, m, m, tgt_mask))
@@ -110,49 +116,42 @@ class Decoder(nn.Module):
         self.layers = clones(layer, N)
         self.norm = LayerNorm(layer.size)
 
-    def forward(self, x:torch.Tensor, memory:torch.Tensor, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
+    def forward(self, x:torch.Tensor, memory:torch.Tensor, src_mask:torch.Tensor, 
+                tgt_mask:torch.Tensor) -> torch.Tensor:
         "we do not have mask in the real implementation"
         for layer in self.layers:
-            x = layer(x, memory, src, tgt)
+            x = layer(x, memory, src_mask, tgt_mask)
         return self.norm(x)
-
-class Generator(nn.Module):
-    """final MLP layer after decoder; translation and rotation
-    are generated separately 
-    """
-    def __init__(self, emb_dims:int):
-        super().__init__()
-        self.nn = nn.Sequential(nn.Linear(emb_dims, emb_dims // 2),
-                                nn.BatchNorm1d(emb_dims // 2),
-                                nn.ReLU(),
-                                nn.Linear(emb_dims // 2, emb_dims // 4),
-                                nn.BatchNorm1d(emb_dims // 4),
-                                nn.ReLU(),
-                                nn.Linear(emb_dims // 4, emb_dims // 8),
-                                nn.BatchNorm1d(emb_dims // 8),
-                                nn.ReLU())
-        self.proj_rot = nn.Linear(emb_dims // 8, 4)
-        self.proj_trans = nn.Linear(emb_dims // 8, 3)
-
-    def forward(self, x:torch.Tensor) -> torch.Tensor:
-        x = self.nn(x.max(dim=1)[0])
-        rotation = self.proj_rot(x)
-        translation = self.proj_trans(x)
-        rotation = rotation / torch.norm(rotation, p=2, dim=1, keepdim=True)
-        return rotation, translation
 
 class EncoderDecoder(nn.Module):
     """the core class to wrap up encode-decode architecture
-    as a backbone of Transformer
+    as a backbone of Transformer; src&tgt embed are optional
+    embedding after DGCNN&before encoder/decoder, we set them to
+    None by default
+    We also skip the final generator layer of the "vanilla" Transformer
+    as we will use special "head" to generate rot/trans
     """
-    def __init__(self, encoder, decoder, src_embed, tgt_embed, generator) -> None:
+    def __init__(self, encoder:nn.Module, decoder:nn.Module, src_embed:nn.Module=None, 
+                tgt_embed:nn.Module=None) -> None:
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.src_embed = src_embed
         self.tgt_embed = tgt_embed
-        self.generator = generator
 
-    def forward(self, src, tgt, src_mask, tgt_mask):
+    def forward(self, src:torch.Tensor, tgt:torch.Tensor, 
+                src_mask:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
         encoded = self.encoder(src, src_mask)
-        return self.decoder(encoded, src_mask, tgt, tgt_mask)
+        decoded =  self.decoder(encoded, tgt, src_mask, tgt_mask)
+        return decoded
+
+class MultiHeadAttn(nn.Module):
+    def __init__(self, feature_dim:int, num_heads:int) -> None:
+        super().__init__()
+        assert feature_dim % num_heads == 0
+        self.d_k = feature_dim//num_heads
+        self.n_dim = feature_dim
+        self.n_head = num_heads
+        self.linears = clones(nn.Linear(feature_dim, feature_dim), 4)
+        self.attn = None
+        self.dropout = None
