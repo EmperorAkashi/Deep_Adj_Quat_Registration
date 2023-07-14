@@ -4,7 +4,7 @@ import torch.nn as nn
 from models.utils import clones
 
 """this file is the implementation of transformer, 
-the implementation of phi in section 4.2; 
+the implementation of phi in DCP's section 4.2; 
 """
 
 def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
@@ -147,6 +147,10 @@ class EncoderDecoder(nn.Module):
 
 class MultiHeadAttn(nn.Module):
     def __init__(self, feature_dim:int, num_heads:int) -> None:
+        """feature_dim is the d_model in the original code
+        this module separate the feature space into multi-head
+        and get attention map separately
+        """
         super().__init__()
         assert feature_dim % num_heads == 0
         self.d_k = feature_dim//num_heads
@@ -155,3 +159,25 @@ class MultiHeadAttn(nn.Module):
         self.linears = clones(nn.Linear(feature_dim, feature_dim), 4)
         self.attn = None
         self.dropout = None
+
+    def forward(self, q:torch.Tensor, k:torch.Tensor, v:torch.Tensor, 
+                mask=None) -> torch.Tensor:
+        if mask is not None:
+            mask = mask.unsqueeze(1)
+
+        batch_num = q.size(0)
+
+        # linear layer for q,k,v each by using the first 3 clones
+        # of self.linear
+        query, key, value = \
+            [l(x).view(batch_num, -1, self.h, self.d_k).transpose(1, 2).contiguous()
+             for l, x in zip(self.linears[:3], (q, k, v))]
+
+        # Apply attention on all the projected vectors in batch.
+        x, self.attn = attention(query, key, value, mask=mask,
+                                 dropout=self.dropout)
+        
+        # "Concat" using a view and apply a final linear.
+        x = x.transpose(1, 2).contiguous() \
+            .view(batch_num, -1, self.h * self.d_k)
+        return self.linears[-1](x)
