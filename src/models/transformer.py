@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 from models.utils import clones
@@ -180,4 +179,20 @@ class MultiHeadAttn(nn.Module):
         # "Concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous() \
             .view(batch_num, -1, self.h * self.d_k)
+        # return the map after using the 4th linear layer
         return self.linears[-1](x)
+
+class PositionFeedForward(nn.Module):
+    """Separate linear layer on top of the multi-head attn
+    """
+    def __init__(self, feature_dim, ff_dim) -> None:
+        super().__init__()
+        self.w1 = nn.Linear(feature_dim, ff_dim)
+        self.norm = nn.BatchNorm1d(ff_dim)
+        self.w2 = nn.Linear(ff_dim, feature_dim)
+        self.dropout = None
+
+    def forward(self, x:torch.Tensor) -> torch.Tensor:
+        x = nn.functional.relu(self.w1(x)).transpose(2, 1).contiguous()
+        x = self.norm(x).transpose(2, 1).contiguous()
+        return self.w2(x)
