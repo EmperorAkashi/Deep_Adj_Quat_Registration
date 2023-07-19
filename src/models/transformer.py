@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from models.utils import clones
+import config as cf
+import copy
 
 """this file is the implementation of transformer, 
 the implementation of phi in DCP's section 4.2; 
@@ -196,3 +198,33 @@ class PositionFeedForward(nn.Module):
         x = nn.functional.relu(self.w1(x)).transpose(2, 1).contiguous()
         x = self.norm(x).transpose(2, 1).contiguous()
         return self.w2(x)
+
+class Transformer(nn.modules):
+    """transformer backbone to wrap up all segments above
+    noticed in the decoder layer, one use opposite attention map
+    as key
+    """
+    def __init__(self, config:cf.TranformerConfig) -> None:
+        super().__init__()
+        self.emb_dims = config.emb_dims
+        self.n = config.n_blocks
+        self.ff_dims = config.ff_dims
+        self.n_heads = config.n_heads
+        self.dropout = config.dropout
+        copy_ = copy.deepcopy
+        attn = MultiHeadAttn(self.n_heads, self.emb_dims)
+        ff = PositionFeedForward(self.emb_dims, self.ff_dims, self.dropout)
+        encoded = Encoder(EncoderLayer(self.emb_dims, copy_(attn), copy_(ff), self.dropout), self.n)
+        decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
+        self.model = EncoderDecoder(encoded, decoded)
+
+    def forward(self, input_:torch.Tensor) -> torch.Tensor:
+        src = input_[0]
+        tgt = input_[1]
+
+        src = src.transpose(2,1).contiguous()
+        tgt = tgt.transpose(2,1).contiguous()
+        tgt_embedding = self.model(src,tgt).transpose(2,1).contiguous()
+        src_embedding = self.model(tgt,src).transpose(2,1).contiguous()
+
+        return src_embedding, tgt_embedding
