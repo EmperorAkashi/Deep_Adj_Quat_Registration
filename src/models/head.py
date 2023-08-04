@@ -24,6 +24,8 @@ class SVDHead(nn.Module):
         scores = torch.softmax(scores, dim=2)
 
         # apply pointer map to "correct the raw target cloud"
+        # this will generate "pointer" from src to tgt, instead of 
+        # using closest point as correspondence in ICP
         src_corr = torch.matmul(tgt, scores.transpose(2,1).contiguous())
 
         # centralize two clouds for the relative rotation
