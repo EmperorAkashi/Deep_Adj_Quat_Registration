@@ -3,9 +3,9 @@ import torch
 import torch.nn as nn
 
 class SVDHead(nn.Module):
-    def __init__(self, args) -> None:
+    def __init__(self, emb_dims) -> None:
         super().__init__()
-        self.emb_dims = args.emb_dims
+        self.emb_dims = emb_dims
         self.reflect = nn.Parameter(torch.eye(3), requires_grad=False)
 
     def forward(self, *input) -> torch.Tensor:
