@@ -17,4 +17,11 @@ setup(
     include_package_data=True,
     zip_safe=False,
     python_requires='>=3.8',
+    install_requires=[
+        'hydra-core==1.3.1',
+        'pytorch-lightning==1.9.4',
+        'matplotlib',
+        'tensorboard',
+        'tensorflow',
+    ],
 )
