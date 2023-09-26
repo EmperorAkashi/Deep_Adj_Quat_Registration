@@ -22,6 +22,7 @@ class DCPTrainingConfig:
     batch_size: int = 64
     num_epochs: int = 10
     device: str = 'gpu'
+    loss: str = 'mse'
     num_gpus: int = 1
     log_every: int = 1
 

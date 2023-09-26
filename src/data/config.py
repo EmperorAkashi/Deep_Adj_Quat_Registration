@@ -2,10 +2,6 @@ import dataclasses
 from typing import Optional, Tuple, List, Type, Union
 import omegaconf
 from enum import Enum
-
-class DatasetOption(Enum):
-    MODELNET = "modelnet"
-    KITTI = "kitti"
     
 
 @dataclasses.dataclass
@@ -23,7 +19,7 @@ class KITTIConfig:
     pass
 
 CONFIG_MAP = {
-    DatasetOption.MODELNET: ModelNetConfig
+    "modelnet": ModelNetConfig
     }
 
 @dataclasses.dataclass
@@ -40,8 +36,8 @@ class TrainingDataConfig:
     limit: Optional[int] = None
     num_data_workers: int = 16
     svd_mod: bool = False #use qrmsd or qinit
-    option: DatasetOption = omegaconf.MISSING
+    option: str = omegaconf.MISSING
 
-    def __init__(self, option: DatasetOption):
+    def __init__(self, option: str):
         self.dataset = option
         self.config = CONFIG_MAP[self.dataset]()

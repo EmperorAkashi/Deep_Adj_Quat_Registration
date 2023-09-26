@@ -15,14 +15,15 @@ class LossFn(ABC):
 
 class MSELoss(LossFn):
     def compute_loss(self, rot_ab:torch.Tensor, trans_ab:torch.Tensor, 
-                    rot_ba:torch.Tensor, trans_ba:torch.Tensor,
                     rot_pred:torch.Tensor, trans_pred:torch.Tensor) -> torch.Tensor:
         batch, _, _ = rot_ab.shape
         identity = torch.eye(3).unsqueeze(0).repeat(batch,1,1).to(rot_ab.device)
 
         mse = torch.nn.MSELoss()
-        loss = mse(torch.matmul(rot_ab,rot_pred),identity) + mse(trans_ab,trans_pred)
-        return loss
+        loss_r = mse(torch.matmul(rot_ab,rot_pred),identity) 
+        loss_t =  mse(trans_ab,trans_pred)
+        loss = loss_r + loss_t
+        return loss, loss_r, loss_t
 
 class LossFactory:
     def create(self, loss_name):
