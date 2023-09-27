@@ -14,7 +14,8 @@ class ModelNetDataset(Dataset):
     Dataset to load ModelNet40 mesh data
     """
     def __init__(self, base_path: str, category_list: list, num_sample: int, 
-                sigma: float, num_rot: int, range_max: int, range_min: int):
+                sigma: float, num_rot: int, range_max: int, range_min: int,
+                trans_min:float = -0.5, trans_max:float=0.5):
         all_files = []
         for c in category_list:
             curr_path = "/".join([base_path, c, "train"])
@@ -31,6 +32,8 @@ class ModelNetDataset(Dataset):
         self.sigma = sigma
         self.num_sample = num_sample
         self.num_rot = num_rot
+        self.t_min = trans_min
+        self.t_max = trans_max
         
     def __len__(self):
         return self.num_rot
@@ -52,13 +55,17 @@ class ModelNetDataset(Dataset):
         rotate_cloud = torch.matmul(source_cloud, rot_mat_tensor)
         noise = self.sigma*torch.randn_like(source_cloud)
         target_cloud = rotate_cloud + noise
+
+        translation_ab = torch.rand(3, dtype=torch.float32) - self.t_max
+        shift_cloud = target_cloud + translation_ab
+
         
         concatenate_cloud = torch.empty(2, num_points, 3, dtype=torch.float32)
         
         concatenate_cloud[0,:,:] = source_cloud
-        concatenate_cloud[1,:,:] = target_cloud
+        concatenate_cloud[1,:,:] = shift_cloud
 
-        return concatenate_cloud, torch.as_tensor(r.as_quat(),dtype=torch.float32)
+        return concatenate_cloud, torch.as_tensor(r.as_quat(),dtype=torch.float32), translation_ab
 
 class KittiOdometryDataset(Dataset):
     """
