@@ -10,9 +10,10 @@ class ModelNetConfig:
     sigma: float = 0.01
     num_points: int = 1000 #downsampled size for the modelnet mesh
     num_rot: int = 1000
-    model_net: bool = False
     range_max: int = 35000
     range_min: int = 30000
+    trans_min: float = -0.5
+    trans_max: float = 0.5
 
 @dataclasses.dataclass
 class KITTIConfig:

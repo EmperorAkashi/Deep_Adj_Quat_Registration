@@ -3,9 +3,9 @@ import dataclasses
 
 @dataclasses.dataclass
 class TranformerConfig:
-    emb_dims: int
-    n_blocks: int
-    ff_dims: int
+    emb_dims: int = 512
+    n_blocks: int = 1
+    ff_dims: int = 1024
     n_heads: int = 3
     dropout: bool = False
 
@@ -20,3 +20,4 @@ class DCPConfig:
     pointer: str = "transformer"
     head: str = "svd" # can also be "adjugate"
     backbone: str = "dgcnn" # can also be pointnet
+    

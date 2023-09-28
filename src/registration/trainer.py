@@ -85,7 +85,8 @@ class DCPDataModule(pl.LightningDataModule):
             self.ds = ds.ModelNetDataset(hydra.utils.to_absolute_path(self.cf.file_path), 
                                     self.cf.config.category, self.cf.config.num_points, 
                                     self.cf.config.sigma,self.cf.config.num_rot,
-                                    self.cf.config.range_max, self.cf.config.range_min)
+                                    self.cf.config.range_max, self.cf.config.range_min,
+                                    self.cf.config.trans_min, self.cf.config.trans_max)
         
         self.ds_train = None
         self.ds_val = None
