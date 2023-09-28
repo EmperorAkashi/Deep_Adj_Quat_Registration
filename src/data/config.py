@@ -31,7 +31,7 @@ class TrainingDataConfig:
     file_path(str): path of simulated point cloud and quaternion
     train_prop(float): percentage for training
     """
-    config: Union[ModelNetConfig, KITTIConfig] = dataclasses.field(lambda:ModelNetConfig())  # Avoid automatic initialization
+    config: Union[ModelNetConfig, KITTIConfig] = dataclasses.field(default_factory=lambda:ModelNetConfig())  # Avoid automatic initialization
     file_path: str = omegaconf.MISSING 
     train_prop: float = 0.9
     limit: Optional[int] = None
