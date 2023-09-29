@@ -219,6 +219,7 @@ class Transformer(nn.modules):
         self.model = EncoderDecoder(encoded, decoded)
 
     def forward(self, input_:torch.Tensor) -> torch.Tensor:
+        print("debug transformer: ", len(input_))
         src = input_[0]
         tgt = input_[1]
 
