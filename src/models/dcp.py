@@ -18,7 +18,10 @@ class DCP(nn.Module):
             raise Exception("Not a valid backbone")
 
         if cf.pointer == "transformer":
+            print("debug args")
             self.pointer = Transformer(cf.transform)
+            print("debug args transformer")
+
 
         if cf.head == "svd":
             self.head = H.SVDHead(self.emb_dims)
