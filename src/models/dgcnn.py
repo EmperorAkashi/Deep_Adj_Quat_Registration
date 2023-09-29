@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-import config as cf
-import knn as K
+import models.config as cf
+import models.knn as K
 
 """
 class to implement Dynamic Graphic CNN;
