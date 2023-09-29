@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from models.utils import clones
-import config as cf
+import models.config as cf
 import copy
 
 """this file is the implementation of transformer, 
