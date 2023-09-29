@@ -31,14 +31,10 @@ class TrainingDataConfig:
     file_path(str): path of simulated point cloud and quaternion
     train_prop(float): percentage for training
     """
-    config: Union[ModelNetConfig, KITTIConfig] = dataclasses.field(default_factory=lambda:ModelNetConfig())  # Avoid automatic initialization
-    file_path: str = omegaconf.MISSING 
+    file_path: str = omegaconf.MISSING
+    option: str = omegaconf.MISSING 
+    config: Union[ModelNetConfig, KITTIConfig] = CONFIG_MAP[option]()  # Avoid automatic initialization
     train_prop: float = 0.9
     limit: Optional[int] = None
     num_data_workers: int = 16
     svd_mod: bool = False #use qrmsd or qinit
-    option: str = omegaconf.MISSING
-
-    def __init__(self, option: str):
-        self.dataset = option
-        self.config = CONFIG_MAP[self.dataset]()
