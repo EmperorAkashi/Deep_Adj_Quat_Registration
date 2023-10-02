@@ -20,7 +20,7 @@ class SVDHead(nn.Module):
 
         d_k = src_embedding.size(1)
         # cross score/pointer map of phi_x and phi_y
-        scores = torch.matmul(src_embedding.transpose(2, 1).contiguous(), tgt_embedding) / math.sqrt(d_k)
+        scores = torch.matmul(src_embedding.transpose(2, 1).contiguous(), tgt_embedding) / torch.sqrt(d_k)
         scores = torch.softmax(scores, dim=2)
 
         # apply pointer map to "correct the raw target cloud"
