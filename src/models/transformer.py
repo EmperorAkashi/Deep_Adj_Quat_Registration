@@ -71,7 +71,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, mask))
-        return self.sublayer[1](x. self.ff)
+        return self.sublayer[1](x, self.ff)
 
 class DecoderLayer(nn.Module):
     """second decode layer uses opposite map as key 
