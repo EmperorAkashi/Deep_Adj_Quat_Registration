@@ -206,6 +206,7 @@ class Transformer(nn.modules):
     """
     def __init__(self, config:cf.TranformerConfig) -> None:
         super().__init__()
+
         self.emb_dims = config.emb_dims
         self.n = config.n_blocks
         self.ff_dims = config.ff_dims
@@ -218,11 +219,8 @@ class Transformer(nn.modules):
         decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
         self.model = EncoderDecoder(encoded, decoded)
 
-    def forward(self, input_:torch.Tensor) -> torch.Tensor:
-        print("debug transformer: ", len(input_))
-        src = input_[0]
-        tgt = input_[1]
-
+    def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
+        print("debug transformer, forward")
         src = src.transpose(2,1).contiguous()
         tgt = tgt.transpose(2,1).contiguous()
         tgt_embedding = self.model(src,tgt).transpose(2,1).contiguous()
