@@ -213,10 +213,19 @@ class Transformer(nn.modules):
         self.n_heads = config.n_heads
         self.dropout = config.dropout
         copy_ = copy.deepcopy
+        print('debug before multihead')
         attn = MultiHeadAttn(self.n_heads, self.emb_dims)
+        print('debug before feed forward')
+
         ff = PositionFeedForward(self.emb_dims, self.ff_dims, self.dropout)
+        print('debug before encode')
+
         encoded = Encoder(EncoderLayer(self.emb_dims, copy_(attn), copy_(ff), self.dropout), self.n)
+        print('debug before decode')
+
         decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
+        print('debug before encode decode')
+
         self.model = EncoderDecoder(encoded, decoded)
 
     def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
