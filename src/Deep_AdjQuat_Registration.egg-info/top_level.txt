@@ -1,5 +1,0 @@
-analytical
-data
-models
-registration
-utils
