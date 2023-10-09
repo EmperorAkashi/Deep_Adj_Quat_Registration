@@ -16,7 +16,7 @@ def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
     mask is the map of the opposite sequence (i.e. x v.s. y), to
     mask the attention weights conditional on y or x
     """
-    d_k = query.size(-1)
+    d_k = torch.as_tensor(query.size(-1))
     scores = torch.matmul(query, key.transpose(-2,-1).contiguous())/torch.sqrt(d_k)
 
     if mask:
@@ -151,10 +151,13 @@ class MultiHeadAttn(nn.Module):
         """feature_dim is the d_model in the original code
         this module separate the feature space into multi-head
         and get attention map separately
+        Then concatenate together after self-attention
+        args:
+        feature_dim: the embedded dims of cloud
         """
         super().__init__()
         assert feature_dim % num_heads == 0
-        self.d_k = feature_dim//num_heads
+        self.d_k = feature_dim//num_heads  #dim per head
         self.n_dim = feature_dim
         self.n_head = num_heads
         self.linears = clones(nn.Linear(feature_dim, feature_dim), 4)
@@ -171,7 +174,7 @@ class MultiHeadAttn(nn.Module):
         # linear layer for q,k,v each by using the first 3 clones
         # of self.linear
         query, key, value = \
-            [l(x).view(batch_num, -1, self.h, self.d_k).transpose(1, 2).contiguous()
+            [l(x).view(batch_num, -1, self.n_head, self.d_k).transpose(1, 2).contiguous()
              for l, x in zip(self.linears[:3], (q, k, v))]
 
         # Apply attention on all the projected vectors in batch.
@@ -180,7 +183,7 @@ class MultiHeadAttn(nn.Module):
         
         # "Concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous() \
-            .view(batch_num, -1, self.h * self.d_k)
+            .view(batch_num, -1, self.n_head * self.d_k)
         # return the map after using the 4th linear layer
         return self.linears[-1](x)
 
@@ -199,7 +202,7 @@ class PositionFeedForward(nn.Module):
         x = self.norm(x).transpose(2, 1).contiguous()
         return self.w2(x)
 
-class Transformer(nn.modules):
+class Transformer(nn.Module):
     """transformer backbone to wrap up all segments above
     noticed in the decoder layer, one use opposite attention map
     as key
@@ -213,23 +216,17 @@ class Transformer(nn.modules):
         self.n_heads = config.n_heads
         self.dropout = config.dropout
         copy_ = copy.deepcopy
-        print('debug before multihead')
-        attn = MultiHeadAttn(self.n_heads, self.emb_dims)
-        print('debug before feed forward')
+        attn = MultiHeadAttn(self.emb_dims, self.n_heads)
 
         ff = PositionFeedForward(self.emb_dims, self.ff_dims, self.dropout)
-        print('debug before encode')
 
         encoded = Encoder(EncoderLayer(self.emb_dims, copy_(attn), copy_(ff), self.dropout), self.n)
-        print('debug before decode')
 
         decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
-        print('debug before encode decode')
 
-        self.model = EncoderDecoder(encoded, decoded)
+        self.model = EncoderDecoder(encoded, decoded, None, None)
 
     def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
-        print("debug transformer, forward")
         src = src.transpose(2,1).contiguous()
         tgt = tgt.transpose(2,1).contiguous()
         tgt_embedding = self.model(src,tgt).transpose(2,1).contiguous()

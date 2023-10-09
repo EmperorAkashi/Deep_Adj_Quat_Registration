@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: Deep-AdjQuat-Registration
+Version: 0.1.0
+Summary: Learning based LiDAR registration on different Dataset
+Home-page: 
+Author: Chen Lin, ...
+Author-email: clin@flatironinstitute.org
+License: MIT
+Requires-Python: >=3.8
