@@ -70,6 +70,7 @@ class EncoderLayer(nn.Module):
         self.size = size #will be called by the interface
 
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
+        # delay execution of attn to ensure dropout
         x = self.sublayer[0](x, lambda x: self.attn(x, x, x, mask))
         return self.sublayer[1](x, self.ff)
 

@@ -23,6 +23,7 @@ class DGCNN(nn.Module):
 
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         batch_size, num_dims, num_points = x.size()
+        
         # get k nearest graph for the batch of clouds
         # will in a shape (batch_size, num_dims, num_points, k)
         x = K.get_graph_features(x)
