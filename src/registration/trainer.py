@@ -25,7 +25,7 @@ class DCPTrainer(pl.LightningModule):
 
         if not omegaconf.OmegaConf.is_config(config):
             config = omegaconf.OmegaConf.structured(config)
-        self.save_hyperparameter(config)
+        self.save_hyperparameters(config)
 
         self.net = DCP(config.model)
         self.config = config
