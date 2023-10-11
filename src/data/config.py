@@ -39,6 +39,10 @@ class TrainingDataConfig:
     num_data_workers: int = 16
     svd_mod: bool = False #use qrmsd or qinit
 
-    def __post_init__(self):
+    def set_config(self):
         self.config = CONFIG_MAP[self.option]()
+
+        if self.option not in CONFIG_MAP:
+            raise ValueError(f"Invalid option: {self.option}")
+
 
