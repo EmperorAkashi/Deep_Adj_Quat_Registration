@@ -35,16 +35,11 @@ class TrainingDataConfig(BaseConfig):
     """
     file_path: str = omegaconf.MISSING
     option: str = omegaconf.MISSING 
-    config: BaseConfig = omegaconf.MISSING
+    config: BaseConfig = ModelNetConfig()
     train_prop: float = 0.9
     limit: Optional[int] = None
     num_data_workers: int = 16
     svd_mod: bool = False #use qrmsd or qinit
 
-    def set_config(self):
-        self.config = CONFIG_MAP[self.option]()
-
-        if self.option not in CONFIG_MAP:
-            raise ValueError(f"Invalid option: {self.option}")
 
 

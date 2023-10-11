@@ -26,6 +26,4 @@ class DCPTrainingConfig:
     num_gpus: int = 1
     log_every: int = 1
 
-    def __post_init__(self):
-        self.data.set_config()
 
