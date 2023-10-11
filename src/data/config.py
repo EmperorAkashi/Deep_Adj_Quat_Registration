@@ -33,12 +33,12 @@ class TrainingDataConfig:
     """
     file_path: str = omegaconf.MISSING
     option: str = omegaconf.MISSING 
-    
+    config: Union[ModelNetConfig, KITTIConfig] = omegaconf.MISSING
     train_prop: float = 0.9
     limit: Optional[int] = None
     num_data_workers: int = 16
     svd_mod: bool = False #use qrmsd or qinit
 
-    @property
-    def config(self) -> Union[ModelNetConfig, KITTIConfig]:
-        return CONFIG_MAP[self.option]()
+    def __post_init__(self):
+        self.config = CONFIG_MAP[self.option]()
+
