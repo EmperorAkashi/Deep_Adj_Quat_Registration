@@ -81,7 +81,7 @@ class DCPDataModule(pl.LightningDataModule):
         self.cf = config
         self.batch_size = batch_size
 
-        if self.config.option == "modelnet":
+        if self.cf.option == "modelnet":
             self.ds = ds.ModelNetDataset(hydra.utils.to_absolute_path(self.cf.file_path), 
                                     self.cf.config.category, self.cf.config.num_points, 
                                     self.cf.config.sigma,self.cf.config.num_rot,
