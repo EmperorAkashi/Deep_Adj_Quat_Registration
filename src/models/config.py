@@ -6,7 +6,7 @@ class TranformerConfig:
     emb_dims: int = 512
     n_blocks: int = 1
     ff_dims: int = 1024
-    n_heads: int = 3
+    n_heads: int = 4
     dropout: bool = False
 
 @dataclasses.dataclass
