@@ -191,12 +191,12 @@ class MultiHeadAttn(nn.Module):
 class PositionFeedForward(nn.Module):
     """Separate linear layer on top of the multi-head attn
     """
-    def __init__(self, feature_dim, ff_dim) -> None:
+    def __init__(self, feature_dim:int, ff_dim:int, dropout=None) -> None:
         super().__init__()
         self.w1 = nn.Linear(feature_dim, ff_dim)
         self.norm = nn.BatchNorm1d(ff_dim)
         self.w2 = nn.Linear(ff_dim, feature_dim)
-        self.dropout = None
+        self.dropout = dropout
 
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         x = nn.functional.relu(self.w1(x)).transpose(2, 1).contiguous()
