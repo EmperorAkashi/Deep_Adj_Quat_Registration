@@ -72,7 +72,7 @@ class DCPTrainer(pl.LightningModule):
         return loss, mse_r, mse_t    
 
     def configure_optimizers(self):
-        optim = torch.optim.AdamW(self.point_net.parameters(), lr=self.hparams.optim.learning_rate)
+        optim = torch.optim.AdamW(self.net.parameters(), lr=self.hparams.optim.learning_rate)
         return optim    
 
 class DCPDataModule(pl.LightningDataModule):
