@@ -30,6 +30,8 @@ def knn(cloud:torch.Tensor, k:int) -> torch.Tensor:
 
     pairwise = -cloud_sqr - inner - cloud_sqr.transpose(2,1).contiguous()
     print("debug pairwise shape: ", pairwise.shape)
+
+    #should be (batch_size, num_points, k)
     idx = pairwise.topk(k=k, dim=1)[1]
     return idx
 
@@ -41,7 +43,7 @@ def get_graph_features(cloud:torch.Tensor, k:int = 20) -> torch.Tensor:
     then shift idx by idx_base; this is because it will flatten the x as (batch_size * num_points, -1)
     then use the shifted idx to indexing corresponding entries.
     """
-    idx = knn(cloud, k=k) # (batch_size, cloud_num_points, k)
+    idx = knn(cloud, k=k) # (batch_size, num_points, k)
     batch_size, num_points, _ = idx.size()
     _, num_dims, _ = cloud.size()
 

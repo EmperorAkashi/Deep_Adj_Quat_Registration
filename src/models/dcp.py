@@ -33,6 +33,9 @@ class DCP(nn.Module):
         src = input_data[0]
         tgt = input_data[1]
 
+        print("debug DCP forward input src: ", src.shape)
+        print("debug DCP forward input tgt: ", tgt.shape)
+
         src_embedding = self.emb_nn(src)
         tgt_embedding = self.emb_nn(tgt)
 
