@@ -30,6 +30,7 @@ class DCP(nn.Module):
         by multiplying this map, 
         it shift the raw cloud y to a matched averaged point y_hat
         """
+        print("debug DCP input shape: ", input_data.shape)
         src = input_data[0]
         tgt = input_data[1]
 

@@ -29,7 +29,6 @@ def knn(cloud:torch.Tensor, k:int) -> torch.Tensor:
     cloud_sqr = torch.sum(cloud**2, dim=1, keepdim=True)
 
     pairwise = -cloud_sqr - inner - cloud_sqr.transpose(2,1).contiguous()
-    print("debug pairwise shape: ", pairwise.shape)
 
     #should be (batch_size, num_points, k)
     idx = pairwise.topk(k=k, dim=1)[1]
