@@ -230,7 +230,7 @@ class Transformer(nn.Module):
     def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
         src = src.transpose(2,1).contiguous()
         tgt = tgt.transpose(2,1).contiguous()
-        tgt_embedding = self.model(src,tgt).transpose(2,1).contiguous()
-        src_embedding = self.model(tgt,src).transpose(2,1).contiguous()
+        tgt_embedding = self.model(src,tgt,None,None).transpose(2,1).contiguous()
+        src_embedding = self.model(tgt,src,None,None).transpose(2,1).contiguous()
 
         return src_embedding, tgt_embedding
