@@ -29,7 +29,7 @@ def knn(cloud:torch.Tensor, k:int) -> torch.Tensor:
 
     pairwise = -cloud_sqr - inner - cloud_sqr.transpose(2,1).contiguous()
 
-    #should be (batch_size, num_points, k)
+    #should be (batch_size, k, num_points)
     idx = pairwise.topk(k=k, dim=1)[1]
     return idx
 
@@ -41,17 +41,18 @@ def get_graph_features(cloud:torch.Tensor, k:int = 20) -> torch.Tensor:
     then shift idx by idx_base; this is because it will flatten the x as (batch_size * num_points, -1)
     then use the shifted idx to indexing corresponding entries.
     """
-    idx = knn(cloud, k=k) # (batch_size, num_points, k)
-    batch_size, num_points, _ = idx.size()
+    idx = knn(cloud, k=k) # (batch_size, k, num_points)
+    batch_size, _, num_points = idx.size()
     _, num_dims, _ = cloud.size()
 
     # Generate rows with shape (batch_size, 1, 1)
     rows = torch.arange(batch_size, device=cloud.device).view(-1, 1, 1) 
     cols = torch.arange(num_points, device=cloud.device).view(1, -1, 1)
 
-    feature = cloud[rows, idx, :]  # (batch_size, num_points, k, num_dims)
+    feature = cloud[rows, :, idx].permute(0,2,1,3)  # (batch_size, num_points, k, num_dims)
     cloud = cloud.view(batch_size, num_points, 1, num_dims).repeat(1, 1, k, 1)
 
+    #(batch_size, num_dims, num_points, k), consistent with DGCNN
     feature = torch.cat((feature, cloud), dim=3).permute(0, 3, 1, 2)
 
     return feature
