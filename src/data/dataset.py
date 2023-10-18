@@ -65,6 +65,9 @@ class ModelNetDataset(Dataset):
         concatenate_cloud[0,:,:] = source_cloud
         concatenate_cloud[1,:,:] = shift_cloud
 
+        # we use convention of DCP, that the input is in shape (b,3,n_points)
+        concatenate_cloud = concatenate_cloud.transpose(2,1)
+
         return concatenate_cloud, torch.as_tensor(r.as_quat(),dtype=torch.float32), translation_ab
 
 class KittiOdometryDataset(Dataset):

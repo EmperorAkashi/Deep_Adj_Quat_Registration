@@ -24,8 +24,6 @@ def knn(cloud:torch.Tensor, k:int) -> torch.Tensor:
     args: cloud
     the point cloud to be calculated
     """
-    cloud = cloud.transpose(2,1).contiguous()
-
     inner = -2*torch.matmul(cloud.transpose(2,1).contiguous(), cloud)
     cloud_sqr = torch.sum(cloud**2, dim=1, keepdim=True)
 
