@@ -20,34 +20,33 @@ def generate_batch_random_quat(batch:int) -> np.ndarray:
     batch_quat = [generate_random_quat() for _ in range(batch)]
     return np.array(batch_quat)
 
-def quat_to_rot(quat:np.ndarray) -> np.ndarray:
-    """this fxn manually convert quaternion to the rot mat
-    instead of using scipy's Rotation
-    """
-    q0 = quat[0]
-    q1 = quat[1]
-    q2 = quat[2]
-    q3 = quat[3]
-    
-    matrix = np.zeros([3,3])
-    
-    matrix[0,0] = q0**2 + q1**2 - q2**2 - q3**2
-    matrix[0,1] = 2*q1*q2 - 2*q0*q3
-    matrix[0,2] = 2*q1*q3 + 2*q0*q2
-    
-    matrix[1,0] = 2*q1*q2 + 2*q0*q3
-    matrix[1,1] = q0**2 - q1**2 + q2**2 - q3**2
-    matrix[1,2] = 2*q2*q3 - 2*q0*q1
+import torch
 
-    matrix[2,0] = 2*q1*q3 - 2*q0*q2
-    matrix[2,1] = 2*q2*q3 + 2*q0*q1
-    matrix[2,2] = q0**2 - q1**2 - q2**2 + q3**2
-    
-    return matrix
+def quat_to_rot(quat: torch.Tensor) -> torch.Tensor:
+    """Convert a quaternion to a rotation matrix."""
+    q0, q1, q2, q3 = quat[0], quat[1], quat[2], quat[3]
 
-def batch_quat_to_rot(batch_quat:np.ndarray) -> np.ndarray:
+    matrix = torch.zeros(3, 3, dtype=quat.dtype)
+
+    matrix[0, 0] = q0**2 + q1**2 - q2**2 - q3**2
+    matrix[0, 1] = 2 * (q1 * q2 - q0 * q3)
+    matrix[0, 2] = 2 * (q1 * q3 + q0 * q2)
+
+    matrix[1, 0] = 2 * (q1 * q2 + q0 * q3)
+    matrix[1, 1] = q0**2 - q1**2 + q2**2 - q3**2
+    matrix[1, 2] = 2 * (q2 * q3 - q0 * q1)
+
+    matrix[2, 0] = 2 * (q1 * q3 - q0 * q2)
+    matrix[2, 1] = 2 * (q2 * q3 + q0 * q1)
+    matrix[2, 2] = q0**2 - q1**2 - q2**2 + q3**2
+
+    return matrix.to(quat.device)
+
+def batch_quat_to_rot(batch_quat: torch.Tensor) -> torch.Tensor:
+    """Convert a batch of quaternions to a batch of rotation matrices."""
     batch_rot = [quat_to_rot(q) for q in batch_quat]
-    return np.array(batch_rot)
+    return torch.stack(batch_rot).to(batch_quat.device)
+
 
 def rot2quat(M:np.ndarray) -> np.ndarray:
     """this fxn manually convert rot mat to the quaternion
