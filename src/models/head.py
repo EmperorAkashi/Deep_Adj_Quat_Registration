@@ -18,7 +18,7 @@ class SVDHead(nn.Module):
         tgt = input[3]
         batch_size = src.size(0)
 
-        d_k = src_embedding.size(1)
+        d_k = torch.as_tensor(src_embedding.size(1))
         # cross score/pointer map of phi_x and phi_y
         scores = torch.matmul(src_embedding.transpose(2, 1).contiguous(), tgt_embedding) / torch.sqrt(d_k)
         scores = torch.softmax(scores, dim=2)

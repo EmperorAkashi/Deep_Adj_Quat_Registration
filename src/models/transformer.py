@@ -17,7 +17,6 @@ def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
     mask the attention weights conditional on y or x
     """
     d_k = torch.as_tensor(query.size(-1))
-    print("debug d_k's type: ", d_k.type)
     scores = torch.matmul(query, key.transpose(-2,-1).contiguous())/torch.sqrt(d_k)
 
     if mask:
