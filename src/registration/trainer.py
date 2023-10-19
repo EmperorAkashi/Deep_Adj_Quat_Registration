@@ -51,7 +51,8 @@ class DCPTrainer(pl.LightningModule):
 
         loss, mse_r, mse_t = loss_computer.compute_loss(rot, trans, rot_ab_pred, trans_ab_pred)
 
-        return loss, mse_r, mse_t    
+        self.training_log(batch, loss, mse_r, mse_t)
+        return loss   
 
     def validation_log(self, batch, loss:float, mse_r:float, mse_t:float):
         cloud, quat, trans = batch
@@ -70,7 +71,8 @@ class DCPTrainer(pl.LightningModule):
 
         loss, mse_r, mse_t = loss_computer.compute_loss(rot, trans, rot_ab_pred, trans_ab_pred)
 
-        return loss, mse_r, mse_t    
+        self.validation_log(batch, loss, mse_r, mse_t)
+        return loss   
 
     def configure_optimizers(self):
         optim = torch.optim.AdamW(self.net.parameters(), lr=self.hparams.optim.learning_rate)
