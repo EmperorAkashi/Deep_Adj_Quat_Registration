@@ -21,13 +21,13 @@ class MSELoss(LossFn):
 
         mse = torch.nn.MSELoss()
         loss_r = mse(torch.matmul(rot_ab,rot_pred),identity) 
-        loss_t =  mse(trans_ab,trans_pred)
+        loss_t = mse(trans_ab,trans_pred)
         loss = loss_r + loss_t
         return loss, loss_r, loss_t
 
 class LossFactory:
     def create(self, loss_name):
         switcher = {
-            'mse': MSELoss
+            'mse': MSELoss()
         }
         return switcher.get(loss_name)
