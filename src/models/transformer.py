@@ -133,19 +133,27 @@ class EncoderDecoder(nn.Module):
     We also skip the final generator layer of the "vanilla" Transformer
     as we will use special "head" to generate rot/trans
     """
-    def __init__(self, encoder:nn.Module, decoder:nn.Module, src_embed:nn.Module=None, 
-                tgt_embed:nn.Module=None) -> None:
+    def __init__(self, encoder:nn.Module, decoder:nn.Module, src_embed:nn.Module, 
+                tgt_embed:nn.Module, generator:nn.Module) -> None:
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.src_embed = src_embed
         self.tgt_embed = tgt_embed
+        self.generator = generator
 
     def forward(self, src:torch.Tensor, tgt:torch.Tensor, 
                 src_mask:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
-        encoded = self.encoder(src, src_mask)
-        decoded =  self.decoder(encoded, tgt, src_mask, tgt_mask)
+        encoded = self.encode_(src, src_mask)
+        decoded =  self.decode_(encoded, src_mask, tgt, tgt_mask)
         return decoded
+
+    def encode_(self, src:torch.Tensor, src_mask:torch.Tensor) -> torch.Tensor:
+        return self.encoder(self.src_embed(src), src_mask)
+
+    def decode_(self, memory:torch.Tensor, src_mask:torch.Tensor, 
+                tgt:torch.Tensor, tgt_mask:torch.Tensor) -> torch.Tensor:
+        return self.generator(self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask))
 
 class MultiHeadAttn(nn.Module):
     def __init__(self, feature_dim:int, num_heads:int) -> None:
@@ -225,7 +233,8 @@ class Transformer(nn.Module):
 
         decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
 
-        self.model = EncoderDecoder(encoded, decoded, None, None)
+        self.model = EncoderDecoder(encoded, decoded, nn.Sequential(), 
+                                    nn.Sequential(), nn.Sequential())
 
     def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
         src = src.transpose(2,1).contiguous()
