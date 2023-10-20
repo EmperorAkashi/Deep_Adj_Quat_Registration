@@ -43,7 +43,7 @@ class SVDHead(nn.Module):
             r = torch.matmul(v, u.transpose(1, 0).contiguous())
             r_det = torch.det(r)
             if r_det < 0:
-                u, s, v = torch.svd(H[i])
+                u, s, v = torch.linalg.svd(H[i])
                 v = torch.matmul(v, self.reflect)
                 r = torch.matmul(v, u.transpose(1, 0).contiguous())
                 # r = r * self.reflect
