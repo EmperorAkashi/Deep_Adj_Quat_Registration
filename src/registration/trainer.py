@@ -41,7 +41,6 @@ class DCPTrainer(pl.LightningModule):
 
     def training_step(self, batch, batch_idx: int):
         cloud, quat, trans = batch
-        print("debugging batch loader: ", cloud.shape)
         rot_ab_pred, trans_ab_pred, _, _ = self(cloud)
 
         rot = Q.batch_quat_to_rot(quat)

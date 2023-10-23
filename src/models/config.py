@@ -4,9 +4,9 @@ import dataclasses
 @dataclasses.dataclass
 class TranformerConfig:
     emb_dims: int = 512
-    n_blocks: int = 1
+    n_blocks: int = 1 #number of encoder layers
     ff_dims: int = 1024
-    n_heads: int = 4
+    n_heads: int = 4 #nuber of heads of multi-attention
     dropout: bool = False
 
 @dataclasses.dataclass

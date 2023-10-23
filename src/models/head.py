@@ -39,6 +39,7 @@ class SVDHead(nn.Module):
         R = []
 
         for i in range(src.size(0)):
+            print("debug current H Matrix: ",H[i])
             u, s, v = torch.linalg.svd(H[i])
             r = torch.matmul(v, u.transpose(1, 0).contiguous())
             r_det = torch.det(r)
