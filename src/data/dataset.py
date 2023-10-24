@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader, sampler
 import os
 import glob
 import torch
-from utils.quat_util import generate_random_quat
+import utils.quat_util as Q
 import utils.file_util as F
 from analytical.optimal_svd import direct_SVD
 from scipy.spatial.transform import Rotation as R
@@ -15,7 +15,7 @@ class ModelNetDataset(Dataset):
     """
     def __init__(self, base_path: str, category_list: list, num_sample: int, 
                 sigma: float, num_rot: int, range_max: int, range_min: int,
-                trans_min:float = -0.5, trans_max:float=0.5):
+                rot_option:str, trans_max:float=0.5, angle_max:int=180):
         all_files = []
         for c in category_list:
             curr_path = "/".join([base_path, c, "train"])
@@ -32,23 +32,31 @@ class ModelNetDataset(Dataset):
         self.sigma = sigma
         self.num_sample = num_sample
         self.num_rot = num_rot
-        self.t_min = trans_min
         self.t_max = trans_max
+        self.r_max = angle_max
+        self.rot_option = rot_option
         
     def __len__(self):
         return self.num_rot
 
     def __getitem__(self, index: int):
+        #select one cloud from all selected files
         random_pick = np.random.randint(len(self.select_files))
         orig_cloud = torch.as_tensor(F.read_off_file(self.select_files[random_pick]), dtype=torch.float32)
 
+        #downsampling with random point indices
         random_indices = torch.randperm(len(orig_cloud))
         num_points = int(self.num_sample)
         picked_indices = random_indices[:num_points]  
         source_cloud = orig_cloud[picked_indices]
 
-        curr_rot = generate_random_quat()
-        r = R.from_quat(curr_rot)
+        if self.rot_option == "JPL":
+            curr_rot = Q.generate_random_quat()
+            r = R.from_quat(curr_rot)
+        elif self.rot_option == "Hamitonian":
+            angle = Q.generate_random_rot(self.r_max)
+            r = R.from_euler('zyx', angle, degrees=True)
+
         rot_mat = r.as_matrix()
         rot_mat_tensor = torch.as_tensor(rot_mat, dtype=torch.float32)
 

@@ -1,5 +1,20 @@
 import numpy as np
 from typing import List
+import torch
+from scipy.spatial.transform import Rotation as R
+
+
+def generate_random_rot(max_angle:int) -> np.ndarray:
+    """generate a random euler angle from scipy
+    the instance "r" will be generated inside the dataset
+    """
+    curr_angle = R.random().as_euler('zyx', degrees=True)
+    scale_factor = 1
+    if max_angle != 180:
+        scale_factor = max_angle/180
+    curr_angle = curr_angle*scale_factor
+
+    return curr_angle
 
 def generate_random_quat() -> np.ndarray:
     """this code generates a random quaternion
@@ -19,8 +34,6 @@ def generate_random_quat() -> np.ndarray:
 def generate_batch_random_quat(batch:int) -> np.ndarray:
     batch_quat = [generate_random_quat() for _ in range(batch)]
     return np.array(batch_quat)
-
-import torch
 
 def quat_to_rot(quat: torch.Tensor) -> torch.Tensor:
     """Convert a quaternion to a rotation matrix."""

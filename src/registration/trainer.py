@@ -88,7 +88,8 @@ class DCPDataModule(pl.LightningDataModule):
                                     self.cf.config.category, self.cf.config.num_points, 
                                     self.cf.config.sigma,self.cf.config.num_rot,
                                     self.cf.config.range_max, self.cf.config.range_min,
-                                    self.cf.config.trans_min, self.cf.config.trans_max)
+                                    self.cf.config.rot_option, 
+                                    self.cf.config.trans_max, self.cf.config.rot_max)
         
         self.ds_train = None
         self.ds_val = None

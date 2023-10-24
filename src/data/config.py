@@ -14,8 +14,9 @@ class ModelNetConfig(BaseConfig):
     num_rot: int = 1000
     range_max: int = 35000
     range_min: int = 30000
-    trans_min: float = -0.5
     trans_max: float = 0.5
+    rot_max: int = 45
+    rot_option: str = "JPL" #can be Hamitonian with our custom code
 
 @dataclasses.dataclass
 class KITTIConfig:
