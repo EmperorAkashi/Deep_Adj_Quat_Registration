@@ -23,28 +23,29 @@ class DGCNN(nn.Module):
 
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         batch_size, num_dims, num_points = x.size()
-        
+
         # get k nearest graph for the batch of clouds
         # will in a shape (batch_size, num_dims, num_points, k)
         x = K.get_graph_features(x)
 
         # get most significant feature along k (dim=-1)
-        x = nn.functional.relu(self.bn1(self.conv1(x)))
+        x = nn.functional.leaky_relu(self.bn1(self.conv1(x)))
         x1 = x.max(dim=-1, keepdim=True)[0]
 
-        x = nn.functional.relu(self.bn2(self.conv2(x)))
+        x = nn.functional.leaky_relu(self.bn2(self.conv2(x)))
         x2 = x.max(dim=-1, keepdim=True)[0]
 
-        x = nn.functional.relu(self.bn3(self.conv3(x)))
+        x = nn.functional.leaky_relu(self.bn3(self.conv3(x)))
         x3 = x.max(dim=-1, keepdim=True)[0]
 
-        x = nn.functional.relu(self.bn4(self.conv4(x)))
+        x = nn.functional.leaky_relu(self.bn4(self.conv4(x)))
         x4 = x.max(dim=-1, keepdim=True)[0]
 
         # cat along the channel
         x = torch.cat((x1, x2, x3, x4), dim=1)
 
-        x = nn.functional.relu(self.bn5(self.conv5(x))).view(batch_size, -1, num_points)
+        x = nn.functional.leaky_relu(self.bn5(self.conv5(x))).view(batch_size, -1, num_points)
+
         return x
 
 
