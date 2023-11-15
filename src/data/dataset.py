@@ -6,8 +6,10 @@ import glob
 import torch
 import utils.quat_util as Q
 import utils.file_util as F
+from data.utils import center_norm
 from analytical.optimal_svd import direct_SVD
 from scipy.spatial.transform import Rotation as R
+
 
 class ModelNetDataset(Dataset):
     """
@@ -42,7 +44,9 @@ class ModelNetDataset(Dataset):
     def __getitem__(self, index: int):
         #select one cloud from all selected files
         random_pick = np.random.randint(len(self.select_files))
-        orig_cloud = torch.as_tensor(F.read_off_file(self.select_files[random_pick]), dtype=torch.float32)
+        load_cloud = F.read_off_file(self.select_files[random_pick])
+        norm_cloud = center_norm(load_cloud)
+        orig_cloud = torch.as_tensor(norm_cloud, dtype=torch.float32)
 
         #downsampling with random point indices
         random_indices = torch.randperm(len(orig_cloud))
