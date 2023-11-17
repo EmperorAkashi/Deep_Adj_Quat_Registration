@@ -30,7 +30,9 @@ class SVDHead(nn.Module):
 
         # centralize two clouds for the relative rotation
         src_centered = src - src.mean(dim=2, keepdim=True)
+        print("debug centered src: ", src_centered)
         src_corr_centered = src_corr - src_corr.mean(dim=2, keepdim=True)
+        print("debug centered tgt: ", src_corr_centered)
 
         # start regular svd calculation
         H = torch.matmul(src_centered, src_corr_centered.transpose(2, 1).contiguous())
@@ -39,7 +41,7 @@ class SVDHead(nn.Module):
         R = []
 
         for i in range(src.size(0)):
-            print("debug current H Matrix: ",H[i])
+            #print("debug current H Matrix: ",H[i])
             u, s, v = torch.linalg.svd(H[i])
             r = torch.matmul(v, u.transpose(1, 0).contiguous())
             r_det = torch.det(r)

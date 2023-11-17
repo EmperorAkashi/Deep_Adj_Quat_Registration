@@ -130,8 +130,8 @@ def main(config: cf.DCPTrainingConfig):
 
     if trainer.is_global_zero:
         logger.info(f'Finished training. Final MSE loss: {trainer.logged_metrics["train/mse_loss"]}')
-        logger.info(f'Finished training. Final MSE of Rotation: {trainer.logged_metrics["train/mse_r"]}')
-        logger.info(f'Finished training. Final MSE of Translation: {trainer.logged_metrics["train/mse_t"]}')
+        logger.info(f'Finished training. Final MSE of Rotation: {trainer.logged_metrics["train/mse_rot"]}')
+        logger.info(f'Finished training. Final MSE of Translation: {trainer.logged_metrics["train/mse_trans"]}')
 
 
 if __name__ == '__main__':

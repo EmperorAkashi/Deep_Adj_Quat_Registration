@@ -36,11 +36,8 @@ class DCP(nn.Module):
         src_embedding = self.emb_nn(src)
         tgt_embedding = self.emb_nn(tgt)
 
-        print("debug embedding features: ", src_embedding)
 
         src_embedding_p, tgt_embedding_p = self.pointer(src_embedding, tgt_embedding)
-
-        print("debug transformed features: ", src_embedding_p)
 
 
         src_embedding = src_embedding + src_embedding_p
