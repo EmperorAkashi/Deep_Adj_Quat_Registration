@@ -4,6 +4,8 @@ from torch.utils.data import Dataset, DataLoader, sampler
 import os
 import glob
 import torch
+import h5py
+
 import utils.quat_util as Q
 import utils.file_util as F
 from data.utils import center_norm
@@ -81,6 +83,32 @@ class ModelNetDataset(Dataset):
         concatenate_cloud = concatenate_cloud.transpose(2,1)
 
         return concatenate_cloud, torch.as_tensor(r.as_quat(),dtype=torch.float32), translation_ab
+
+class ShapeNetDataset(Dataset):
+    """
+    Dataset to load Stanford's Shapenet_Modelnet
+    """
+    def __init__(self, base_path:str, partition:str) -> None:
+        super().__init__()
+        data_dir = os.path.join(base_path, 'data')
+
+        self.all_data = []
+        self.all_label = []
+
+        for h5 in glob.glob(os.path.join(data_dir, 
+                            'modelnet40_ply_hdf5_2048', 
+                            'ply_data_%s*.h5' % partition)):
+            f = h5py.File(h5)
+            data = f['data'][:].astype('float32')
+            label = f['label'][:].astype('int64')
+            f.close()
+            self.all_data.append(data)
+            self.all_label.append(label)
+        self.all_data = np.concatenate(self.all_data, axis=0)
+        self.all_label = np.concatenate(self.all_label, axis=0)
+
+
+
 
 class KittiOdometryDataset(Dataset):
     """
