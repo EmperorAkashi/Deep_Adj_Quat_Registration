@@ -8,7 +8,7 @@ import h5py
 
 import utils.quat_util as Q
 import utils.file_util as F
-from data.utils import center_norm
+from data.utils import center_norm, load_shapenet
 from analytical.optimal_svd import direct_SVD
 from scipy.spatial.transform import Rotation as R
 
@@ -88,24 +88,16 @@ class ShapeNetDataset(Dataset):
     """
     Dataset to load Stanford's Shapenet_Modelnet
     """
-    def __init__(self, base_path:str, partition:str) -> None:
+    def __init__(self, base_path: str, partition: str, sigma: float, 
+                num_rot: int, range_max: int, range_min: int,
+                rot_option:str, trans_max:float=0.5, angle_max:int=180) -> None:
+        """args:
+        partition: a string to specify train or test set
+        (Shapenet data has no subfolder for different categories,
+        but mixed them in on h5 file)
+        """
         super().__init__()
-        data_dir = os.path.join(base_path, 'data')
-
-        self.all_data = []
-        self.all_label = []
-
-        for h5 in glob.glob(os.path.join(data_dir, 
-                            'modelnet40_ply_hdf5_2048', 
-                            'ply_data_%s*.h5' % partition)):
-            f = h5py.File(h5)
-            data = f['data'][:].astype('float32')
-            label = f['label'][:].astype('int64')
-            f.close()
-            self.all_data.append(data)
-            self.all_label.append(label)
-        self.all_data = np.concatenate(self.all_data, axis=0)
-        self.all_label = np.concatenate(self.all_label, axis=0)
+        self.data, self.label = load_shapenet(partition)
 
 
 
