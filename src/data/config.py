@@ -22,6 +22,10 @@ class ModelNetConfig(BaseConfig):
 class KITTIConfig:
     pass
 
+@dataclasses.dataclass
+class ShapeNetConfig:
+    pass
+
 CONFIG_MAP = {
     "modelnet": ModelNetConfig
     }

@@ -16,7 +16,7 @@ def generate_random_rot(max_angle:int) -> np.ndarray:
 
     return curr_angle
 
-def generate_random_quat() -> np.ndarray:
+def generate_random_quat(convention:str="Hamitonian") -> np.ndarray:
     """this code generates a random quaternion
     NOTE: this is actually the correct way to do a uniform random rotation in SO3
     """
@@ -29,6 +29,10 @@ def generate_random_quat() -> np.ndarray:
         norm = np.sqrt(np.sum(quat**2))
     
     quat = quat / norm
+
+    if convention == "JPL":
+        order = [3,0,1,2]
+        quat = quat[order]
     return quat
 
 def generate_batch_random_quat(batch:int) -> np.ndarray:
