@@ -67,7 +67,7 @@ class EncoderLayer(nn.Module):
         self.attn = attn
         self.ff = feed_forward
         self.sublayer = clones(AddLayerNorm(size, dropout),2)
-        self.size = size #will be called by the interface
+        self.size = size # will be called by the interface
 
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
         # delay execution of attn to ensure dropout
@@ -105,6 +105,7 @@ class Encoder(nn.Module):
         super().__init__()
         self.layers = clones(layer, N)
         self.norm = LayerNorm(layer.size)
+
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x,mask)
@@ -166,7 +167,7 @@ class MultiHeadAttn(nn.Module):
         """
         super().__init__()
         assert feature_dim % num_heads == 0
-        self.d_k = feature_dim//num_heads  #dim per head
+        self.d_k = feature_dim // num_heads  # dim per head
         self.n_dim = feature_dim
         self.n_head = num_heads
         self.linears = clones(nn.Linear(feature_dim, feature_dim), 4)
@@ -197,19 +198,21 @@ class MultiHeadAttn(nn.Module):
         return self.linears[-1](x)
 
 class PositionFeedForward(nn.Module):
-    """Separate linear layer on top of the multi-head attn
-    """
-    def __init__(self, feature_dim:int, ff_dim:int, dropout=None) -> None:
+    def __init__(self, feature_dim: int, ff_dim: int, dropout=None) -> None:
         super().__init__()
         self.w1 = nn.Linear(feature_dim, ff_dim)
-        self.norm = nn.BatchNorm1d(ff_dim)
         self.w2 = nn.Linear(ff_dim, feature_dim)
-        self.dropout = dropout
+        self.dropout = nn.Dropout(dropout) if dropout else nn.Identity()
+        self.activation = nn.ReLU()
 
-    def forward(self, x:torch.Tensor) -> torch.Tensor:
-        x = nn.functional.relu(self.w1(x)).transpose(2, 1).contiguous()
-        x = self.norm(x).transpose(2, 1).contiguous()
-        return self.w2(x)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: [B, N, D]
+        x = self.w1(x)                 # [B, N, ff_dim]
+        x = self.activation(x)
+        x = self.dropout(x)
+        x = self.w2(x)                 # [B, N, D]
+        return x
+
 
 class Transformer(nn.Module):
     """transformer backbone to wrap up all segments above
@@ -234,7 +237,7 @@ class Transformer(nn.Module):
         decoded = Decoder(DecoderLayer(self.emb_dims, copy_(attn), copy_(attn), copy_(ff), self.dropout), self.n)
 
         self.model = EncoderDecoder(encoded, decoded, nn.Sequential(), 
-                                    nn.Sequential(), nn.Sequential())
+                                    nn.Sequential(), nn.Sequential()) # empty nn.Sequential, cause DGCNN did embedding
 
     def forward(self, src:torch.Tensor, tgt:torch.Tensor) -> torch.Tensor:
         src = src.transpose(2,1).contiguous()
