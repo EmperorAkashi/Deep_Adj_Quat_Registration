@@ -28,7 +28,7 @@ class DGCNN(nn.Module):
         # will in a shape (batch_size, num_dims, num_points, k)
         x = K.get_graph_features(x)
 
-        # get most significant feature along k (dim=-1)
+        # get most significant feature along k (dim=-1), take max so permutation invariant
         x = nn.functional.leaky_relu(self.bn1(self.conv1(x)))
         x1 = x.max(dim=-1, keepdim=True)[0]
 

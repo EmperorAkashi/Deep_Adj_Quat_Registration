@@ -12,18 +12,23 @@ def attention(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
               mask=None, dropout=None) -> torch.Tensor:
     
     """
-    return: normalized score map, softmax(q*k) and attention map
+    @note: function operates on the last two dimensions of the input tensors, 
+    i.e. the num_points/token dimension and sub feature dimension
+    @return: normalized score map, softmax(q*k) and attention map
     mask is the map of the opposite sequence (i.e. x v.s. y), to
     mask the attention weights conditional on y or x
     """
     d_k = torch.as_tensor(query.size(-1))
+    # key transpose to (batch_num, self.n_head, self.d_k, num_points/tokens)
+    # then matmul to (batch_num, self.n_head, num_points/tokens, num_points/tokens)
+    # i.e. torch.matmul offers automatic broadcasting
     scores = torch.matmul(query, key.transpose(-2,-1).contiguous())/torch.sqrt(d_k)
 
     if mask:
         scores = scores.masked_fill(mask == 0, -1e9)
-    p_attn = nn.functional.softmax(scores, dim=-1)
+    p_attn = nn.functional.softmax(scores, dim=-1) # (batch_num, self.n_head, num_points/tokens, num_points/tokens)
 
-    return torch.matmul(p_attn, value), p_attn
+    return torch.matmul(p_attn, value), p_attn # (batch_num, self.n_head, num_points/tokens, self.d_k)
 
 class LayerNorm(nn.Module):
     """class to implement layer norm, which aims to shift the values 
@@ -66,7 +71,7 @@ class EncoderLayer(nn.Module):
         super().__init__()
         self.attn = attn
         self.ff = feed_forward
-        self.sublayer = clones(AddLayerNorm(size, dropout),2)
+        self.sublayer = clones(AddLayerNorm(size, dropout), 2)
         self.size = size # will be called by the interface
 
     def forward(self, x:torch.Tensor, mask:torch.Tensor) -> torch.Tensor:
@@ -183,15 +188,17 @@ class MultiHeadAttn(nn.Module):
 
         # linear layer for q,k,v each by using the first 3 clones
         # of self.linear
+        # after l(x) and view, the shape is (batch_num, num_points/tokens, self.n_head, self.d_k) then transpose
+        # to (batch_num, self.n_head, num_points/tokens, self.d_k)
         query, key, value = \
             [l(x).view(batch_num, -1, self.n_head, self.d_k).transpose(1, 2).contiguous()
              for l, x in zip(self.linears[:3], (q, k, v))]
 
-        # Apply attention on all the projected vectors in batch.
+        # Apply attention with automatic broadcasting x: (batch_num, self.n_head, num_points/tokens, self.d_k)
         x, self.attn = attention(query, key, value, mask=mask,
                                  dropout=self.dropout)
         
-        # "Concat" using a view and apply a final linear.
+        # using a view to reshape x to (batch_num, num_points/tokens, self.n_head * self.d_k)
         x = x.transpose(1, 2).contiguous() \
             .view(batch_num, -1, self.n_head * self.d_k)
         # return the map after using the 4th linear layer
@@ -219,7 +226,7 @@ class Transformer(nn.Module):
     noticed in the decoder layer, one use opposite attention map
     as key
     """
-    def __init__(self, config:cf.TranformerConfig) -> None:
+    def __init__(self, config:cf.TransformerConfig) -> None:
         super().__init__()
 
         self.emb_dims = config.emb_dims
